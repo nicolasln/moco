@@ -7,7 +7,7 @@ bl_info = {
     "location": "View3D > Tools",
     "warning": "Only the Export functionality works at the moment",
     "wiki_url": "",
-    "category": "Import-Export"}    
+    "category": "Import-Export"}
 
 import bpy
 from datetime import datetime
@@ -22,7 +22,7 @@ class MocoData(bpy.types.PropertyGroup):
     target = bpy.props.StringProperty()
 
 
-# Import Panel        
+# Import Panel
 class MoCoImportPanel(bpy.types.Panel):
     bl_idname = 'VIEW3D_PT_moco_import'
     bl_label = 'Import'
@@ -34,7 +34,7 @@ class MoCoImportPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        
+
         box = layout.box()
         row = box.row()
         row.alignment='CENTER'
@@ -55,19 +55,26 @@ class MoCoExportPanel(bpy.types.Panel):
         scene = context.scene
 
         col = layout.column()
+        
+        box = col.box()
+        row = box.row()
+        row.alignment = 'CENTER'
+        row.label(text='MRMC Cartesians')
+        
+        col.separator()
         col.prop_search(scene.moco, 'camera', scene, 'objects', text='Camera', icon='OUTLINER_OB_CAMERA')
-        col.prop_search(scene.moco, 'target', scene, 'objects', text='Target', icon='OUTLINER_OB_EMPTY')        
+        col.prop_search(scene.moco, 'target', scene, 'objects', text='Target', icon='OUTLINER_OB_EMPTY')
         col.separator()
         col.prop(scene.moco, 'file_export', text='')
-        col.operator('moco.export', text='Export to MRMC Carts', icon='FILE_TEXT')
+        col.operator('moco.export', text='Export', icon='FILE_TEXT')
 
 # Export Operator
 class MocoExport(bpy.types.Operator):
     bl_idname = 'moco.export'
     bl_label = 'Moco Export'
     bl_options = {'REGISTER'}
-    
-    def execute(self, context):    
+
+    def execute(self, context):
         type, message = export_mrmc_carts()
         self.report(type, message)
         return {'FINISHED'}
@@ -81,7 +88,7 @@ def export_mrmc_carts():
     scene = bpy.context.scene
     moco = bpy.context.scene.moco
 
-    # Make sure we have a camera, target and file                
+    # Make sure we have a camera, target and file
     try:
         camera = scene.objects[moco.camera]
         target = scene.objects[moco.target]
@@ -101,13 +108,15 @@ def export_mrmc_carts():
     # Convert coordinates from Blender to MRMC
     conversion_matrix = (
         Matrix.Rotation(radians(90), 4, 'Z') *  # Rotate world 90
-        Matrix.Scale(100, 4)  # Convert from Meters to Centimeters 
+        Matrix.Scale(100, 4)  # Convert from Meters to Centimeters
         )
 
-    with open(file_export, mode='w', encoding='utf-8') as file:    
-        file.write('# CGI Export from Blender/MoCo on {}\n'.format(datetime.now().strftime("%Y-%m-%d %H:%M")))
+    with open(file_export, mode='w', encoding='utf-8') as file:
+        file.write('# CGI Export from Blender/MoCo on {}\n'.format(
+            datetime.now().strftime("%Y-%m-%d %H:%M")))
         file.write('# Exported from: {}\n'.format(bpy.data.filepath))
-        file.write('# Exported objects: {}, {}\n'.format(scene.moco.camera, scene.moco.target))
+        file.write('# Exported objects: {}, {}\n'.format(
+            scene.moco.camera, scene.moco.target))
         file.write('DATA_TYPE  CARTS_RAW  MRMC_COORDS  IN_CENTIMETRES\n')
         file.write('POINTS {}  SPEED {}\n'.format(frames, scene.render.fps))
         file.write('FRAME     XV         YV         ZV         XT         YT         ZT         ROLL')
@@ -116,19 +125,19 @@ def export_mrmc_carts():
             scene.frame_set(frame)
             v = camera.matrix_world.to_translation() * conversion_matrix
             t = target.matrix_world.to_translation() * conversion_matrix
-            file.write('\n' + 
+            file.write('\n' +
                 '{:4}'.format(frame) +
-                '{:11.5f}'.format(v.x) + 
-                '{:11.5f}'.format(v.y) + 
+                '{:11.5f}'.format(v.x) +
+                '{:11.5f}'.format(v.y) +
                 '{:11.5f}'.format(v.z) +
-                '{:11.5f}'.format(t.x) + 
-                '{:11.5f}'.format(t.y) + 
+                '{:11.5f}'.format(t.x) +
+                '{:11.5f}'.format(t.y) +
                 '{:11.5f}'.format(t.z) +
-                '{:11.5f}'.format(0)      # Roll is hard-coded to 0 for now
-            )
-               
+                '{:11.5f}'.format(0))  # Roll is hard-coded to 0 for now
+
     scene.frame_set(frame_current)
-    return {'INFO'}, 'Exported {} frames to {}'.format(frames, bpy.path.basename(file_export))
+    return {'INFO'}, 'Exported {} frames to {}'.format(
+        frames, bpy.path.basename(file_export))
 
 
 def register():
