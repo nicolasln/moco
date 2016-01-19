@@ -1,11 +1,10 @@
 bl_info = {
     "name": "Moco",
     "description": "Import and Export camera motion to Mark Roberts Motion Control Flair format",
-    "author": "Nicolas Lemery Nantel @ Fabricated Media",
-    "version": (0, 1),
+    "author": "Nicolas Lemery Nantel / Fabricated Media",
+    "version": (1, 0),
     "blender": (2, 76, 0),
-    "location": "View3D > Tools",
-    "warning": "Only the Export functionality works at the moment",
+    "location": "View3D > Animation > Tools",
     "wiki_url": "",
     "category": "Import-Export"}
 
