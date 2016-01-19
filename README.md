@@ -12,12 +12,10 @@ Export in the MRMC Carts format:
 You need to select 2 objects to export, the camera and the target. The roll is hard-coded to 0 for now.
 
 # To do
-→ Explain export at boundaries or frames
--> Camera and targets are created on current layer
-
--> Simplify F Curves, 
--> Extra Mocap Tool
--> http://slsi.dfki.de/software-and-resources/keyframe-reduction/
-
--> Motion Path
--> Motion Trail
+- Explain export at boundaries or frames
+- Camera and targets are created on current layer
+- Simplify F Curves, 
+- Extra Mocap Tool
+- http://slsi.dfki.de/software-and-resources/keyframe-reduction/
+- Motion Path
+- Motion Trail
