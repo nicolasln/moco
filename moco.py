@@ -2,7 +2,7 @@ bl_info = {
     "name": "Moco",
     "description": "Import and Export camera motion to Mark Roberts Motion Control Flair format",
     "author": "Nicolas Lemery Nantel / Fabricated Media",
-    "version": (1, 0),
+    "version": (1, 1),
     "blender": (2, 76, 0),
     "location": "View3D > Animation > Tools",
     "wiki_url": "",
@@ -11,7 +11,7 @@ bl_info = {
 import bpy
 from datetime import datetime
 from mathutils import Matrix, Vector
-from math import radians
+from math import radians, degrees
 from os.path import isfile
 
 # Data Storage
@@ -70,17 +70,17 @@ def import_mrmc_carts():
     points = None
     column_headings = None
     keyframes = []
-    
+
     # Convert from MRMC to Blender coordinates
     conversion_matrix = Matrix.Rotation(radians(-90), 4, 'Z')
 
     file_import = bpy.path.abspath(moco.file_import)
     if not isfile(file_import):
         return {'ERROR'}, 'Invalid file'
-        
+
     with open(file_import, mode='r', encoding='utf-8') as file:
         line_index = 1
-        
+
         for line in file.readlines():
             if line.startswith('#'):  # Line is a comment, skip
                 continue
@@ -111,7 +111,7 @@ def import_mrmc_carts():
             conversion_matrix = conversion_matrix * Matrix.Scale(0.01, 4)   # CM -> M
     else:
         return {'ERROR'}, 'Wrong units, only Meters and Centimeters are supported'
-    
+
     index_frame = column_headings.index('FRAME')
     index_cam_x = column_headings.index('XV')
     index_cam_y = column_headings.index('YV')
@@ -119,7 +119,7 @@ def import_mrmc_carts():
     index_target_x = column_headings.index('XT')
     index_target_y = column_headings.index('YT')
     index_target_z = column_headings.index('ZT')
-    
+
     # Set scene range from imported file
     scene.frame_start = int(keyframes[0][index_frame])
     scene.frame_end = int(keyframes[-1][index_frame])
@@ -131,10 +131,10 @@ def import_mrmc_carts():
     bpy.ops.object.add(type='EMPTY', location=(0, 0, 0))
     target = bpy.context.object
     bpy.context.object.scale = (0.2, 0.2, 0.2)
-    bpy.ops.object.select_all(action='DESELECT')    
+    bpy.ops.object.select_all(action='DESELECT')
     camera.select, target.select = True, True
     bpy.ops.object.track_set(type='TRACKTO')
-    
+
 
     # Import keyframes in Blender
     def keyframe_to_vector(data, x, y, z):
@@ -145,8 +145,8 @@ def import_mrmc_carts():
         vector = float(data[x]), float(data[y]), float(data[z])
         vector = Vector(vector)  # Convert to Blender vector type
         return vector
-        
-    for keyframe in keyframes: 
+
+    for keyframe in keyframes:
         scene.frame_set(int(keyframe[index_frame]))
         camera.location = keyframe_to_vector(keyframe, index_cam_x, index_cam_y, index_cam_z) * conversion_matrix
         target.location = keyframe_to_vector(keyframe, index_target_x, index_target_y, index_target_z) * conversion_matrix
@@ -158,10 +158,10 @@ def import_mrmc_carts():
 # Export Panel
 class MoCoExportPanel(bpy.types.Panel):
     bl_idname = 'VIEW3D_PT_moco_export'
-    bl_label = 'MoCo Export'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = 'Animation'
+    bl_label = 'MoCo Export'
     bl_context = 'objectmode'
 
     def draw(self, context):
@@ -186,7 +186,6 @@ class MoCoExportPanel(bpy.types.Panel):
 class MocoExport(bpy.types.Operator):
     bl_idname = 'moco.export'
     bl_label = 'Moco Export'
-    bl_options = {'REGISTER'}
 
     def execute(self, context):
         type, message = export_mrmc_carts()
@@ -242,6 +241,7 @@ def export_mrmc_carts():
             scene.frame_set(frame)
             v = camera.matrix_world.to_translation() * conversion_matrix
             t = target.matrix_world.to_translation() * conversion_matrix
+            r = degrees(camera.rotation_euler.y) * -1  # 2AM rotation solution
             file.write('\n' +
                 '{:4}'.format(frame) +
                 '{:11.5f}'.format(v.x) +
@@ -250,7 +250,7 @@ def export_mrmc_carts():
                 '{:11.5f}'.format(t.x) +
                 '{:11.5f}'.format(t.y) +
                 '{:11.5f}'.format(t.z) +
-                '{:11.5f}'.format(0))  # Roll is hard-coded to 0 for now
+                '{:11.5f}'.format(r))
 
     scene.frame_set(frame_current)
     return {'INFO'}, 'Exported {} frames to {}'.format(frames, bpy.path.basename(file_export))
