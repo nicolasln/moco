@@ -241,7 +241,7 @@ def export_mrmc_carts():
             scene.frame_set(frame)
             v = camera.matrix_world.to_translation() * conversion_matrix
             t = target.matrix_world.to_translation() * conversion_matrix
-            r = degrees(camera.rotation_euler.y) * -1  # 2AM rotation solution
+            r = degrees(camera.rotation_euler.y + camera.delta_rotation_euler.y) * -1
             file.write('\n' +
                 '{:4}'.format(frame) +
                 '{:11.5f}'.format(v.x) +
